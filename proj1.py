@@ -113,3 +113,5 @@ with open(output_file, 'w') as f:
     f.write(f"Total network length: {total_length:.2f}m ({total_length/1000:.3f}km)\n")
 
 print(f"Data saved to: {output_file}")
+
+#boombaya dla testu branchy
