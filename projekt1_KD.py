@@ -1,3 +1,6 @@
+import dotenv
+import os
+
 class Node:
     def __init__(self, node_id, x, y):
         self.id = node_id   # id węzła
@@ -154,7 +157,7 @@ def create_graph(workspace, layer):
         
     return gc.graph
 
-g = create_graph(r'C:\5sem\PAG\lab3', 'jezdnie_bdot.shp')
+g = create_graph(os.getenv('WORKSPACE_PATH'), os.getenv('WORKSPACE_NAME'))
 print(g)
 start_node = 1    # start
 end_node = 10     # koniec
