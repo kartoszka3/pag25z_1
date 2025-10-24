@@ -162,4 +162,4 @@ g = create_graph(os.getenv('WORKSPACE_PATH'), os.getenv('WORKSPACE_NAME'))
 print(g)
 start_node = 1    # start
 end_node = 10     # koniec
-path_nodes, path_edges, dist, visited, neighbors = dijkstra(g, 1, 10)
+path_nodes, path_edges, dist, visited, neighbors = dijkstra(g, start_node, end_node)
