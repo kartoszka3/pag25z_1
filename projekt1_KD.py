@@ -1,5 +1,9 @@
 import dotenv
 import os
+import math
+import arcpy
+
+dotenv.load_dotenv()
 
 class Node:
     def __init__(self, node_id, x, y):
@@ -64,9 +68,6 @@ class GraphCreator:
         n1.edges.append((e, n2))
         n2.edges.append((e, n1))
               
-import math
-import arcpy
-
 def dijkstra(graph, start_id, end_id):
     # init
     S = set()                         # odwiedzone
