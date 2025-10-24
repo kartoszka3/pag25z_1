@@ -1,4 +1,6 @@
 import arcpy
+import os
+from dotenv import load_dotenv
 
 # Collections to store points and polylines
 points_collection = {}  # {point_id: {'x': x_coord, 'y': y_coord, 'edges_out': [list of polyline_ids]}}
@@ -51,8 +53,10 @@ def dijkstra_shortest_path(points, start_point_id, end_point_id):
                     d[v] = alt
                     p[v] = u
 
-arcpy.env.workspace = r"C:\uni\5sem\pag\proj1\drogi_testowe.shp"
-cursor = arcpy.SearchCursor('drogi_testowe')  # No WHERE clause = get all features
+load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+workspace_path = os.getenv('WORKSPACE_PATH')
+arcpy.env.workspace = workspace_path
+cursor = arcpy.SearchCursor(os.getenv('WORKSPACE_NAME'))  # No WHERE clause = get all features
 
 for row in cursor:
     polyline_id = row.FID
@@ -113,3 +117,5 @@ with open(output_file, 'w') as f:
     f.write(f"Total network length: {total_length:.2f}m ({total_length/1000:.3f}km)\n")
 
 print(f"Data saved to: {output_file}")
+
+#boombaya dla testu branchy
