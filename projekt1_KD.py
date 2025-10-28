@@ -2,6 +2,10 @@ import dotenv
 import os
 import math
 import arcpy
+try:
+    import matplotlib.pyplot as plt
+except Exception:
+    plt = None
 
 dotenv.load_dotenv()
 
@@ -160,6 +164,51 @@ def create_graph(workspace, layer):
 
 g = create_graph(os.getenv('WORKSPACE_PATH'), os.getenv('WORKSPACE_NAME'))
 print(g)
-start_node = 1    # start
-end_node = 10     # koniec
+start_node = 1   # start
+end_node = 15   # koniec
 path_nodes, path_edges, dist, visited, neighbors = dijkstra(g, start_node, end_node)
+
+# --- wizualizacja ---
+def visualize(graph, path_nodes, path_edges, dist, out_png='shortest_path.png'):
+    if plt is None:
+        print("matplotlib not available — pomiń wizualizację.")
+        return
+
+    fig, ax = plt.subplots(figsize=(8, 8))
+
+    for e in graph.edges.values():
+        x1, y1 = e.start.x, e.start.y
+        x2, y2 = e.end.x, e.end.y
+        ax.plot([x1, x2], [y1, y2], color='#cccccc', linewidth=1, zorder=1)
+
+        mid_x = (x1 + x2) / 2
+        mid_y = (y1 + y2) / 2
+        ax.text(mid_x, mid_y, str(e.id), color='gray', fontsize=8, ha='center', va='center', zorder=5)
+
+    for n in graph.nodes.values():
+        ax.scatter(n.x, n.y, color='black', s=15, zorder=2)
+
+        ax.text(n.x, n.y + 0.3, str(n.id), color='blue', fontsize=9, ha='center', va='bottom', zorder=6)
+
+    if path_edges and path_nodes:
+        for eid in path_edges:
+            e = graph.edges.get(eid)
+            if e:
+                x1, y1 = e.start.x, e.start.y
+                x2, y2 = e.end.x, e.end.y
+                ax.plot([x1, x2], [y1, y2], color='red', linewidth=2.5, zorder=3)
+        path_x = [graph.nodes[nid].x for nid in path_nodes]
+        path_y = [graph.nodes[nid].y for nid in path_nodes]
+        ax.scatter(path_x, path_y, color='red', s=40, zorder=4)
+
+    ax.set_aspect('equal', 'box')
+    ax.set_title(f"Najkrótsza trasa {path_nodes}  dystans={dist:.2f}")
+    plt.xlabel('X')
+    plt.ylabel('Y')
+    plt.tight_layout()
+    plt.savefig(out_png, dpi=150)
+    plt.close(fig)
+    print(f"Wizualizacja zapisana jako {out_png}")
+
+# call visualization
+visualize(g, path_nodes, path_edges, dist)
