@@ -158,8 +158,37 @@ def create_graph(workspace, layer):
         
     return gc.graph
 
+def create_path_shp_with_edges(graph, path_edges, output_name="dijkstra_path.shp"):
+    """Kod do utworzenia SHP używając rzeczywistej geometrii krawędzi"""
+    # Użyj aktualnego katalogu jako workspace
+    workspace = os.path.dirname(os.path.abspath(__file__))
+    arcpy.CreateFeatureclass_management(workspace, output_name, "POLYLINE")
+    
+    # Ścieżka do nowego pliku
+    output_path = os.path.join(workspace, output_name)
+    
+    # Dodaj pola
+    arcpy.AddField_management(output_path, "EDGE_ID", "LONG")
+    arcpy.AddField_management(output_path, "PATH_ORDER", "LONG")
+    
+    # Wczytaj oryginalne geometrie z shapefile
+    original_shp = os.path.join(workspace, os.getenv('WORKSPACE_NAME') + ".shp")
+    edge_geometries = {}
+    
+    with arcpy.da.SearchCursor(original_shp, ['FID', 'SHAPE@']) as cursor:
+        for row in cursor:
+            edge_geometries[row[0]] = row[1]
+    
+    # Wstaw geometrie krawędzi ścieżki
+    with arcpy.da.InsertCursor(output_path, ["SHAPE@", "EDGE_ID", "PATH_ORDER"]) as cursor:
+        if path_edges:
+            for i, edge_id in enumerate(path_edges):
+                if edge_id in edge_geometries:
+                    cursor.insertRow([edge_geometries[edge_id], edge_id, i + 1])
+    
+    print(f"Utworzono plik SHP z {len(path_edges)} krawędziami: {output_path}")
+
+# Uruchom algorytm i utwórz SHP z rzeczywistymi krawędziami
 g = create_graph(os.getenv('WORKSPACE_PATH'), os.getenv('WORKSPACE_NAME'))
-print(g)
-start_node = 1    # start
-end_node = 10     # koniec
 path_nodes, path_edges, dist, visited, neighbors = dijkstra(g, 1, 10)
+create_path_shp_with_edges(g, path_edges)
