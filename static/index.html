@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Leaflet wizualizacja</title>
+  <link rel="stylesheet" href="leaflet/leaflet.css">
+  <script src="leaflet/leaflet.js"></script>
+  <style>
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+    #map {
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="map"></div>
+
+  <script>
+    let map = L.map('map').setView([52.2297, 21.0122], 13);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    // Load and display roads layer
+    fetch('/roads.geojson')
+        .then(response => response.json())
+        .then(data => {
+            L.geoJSON(data, {
+                style: {
+                    color: '#ff7800',
+                    weight: 5,
+                    opacity: 0.65
+                }
+            }).addTo(map);
+            
+            // Fit map to roads layer bounds
+            map.fitBounds(L.geoJSON(data).getBounds());
+        });
+
+    let markers = [];
+    let pathLayer = null;
+
+    map.on('click', function(e) {
+        if (markers.length >= 2) {
+            // Clear previous markers
+            markers.forEach(marker => map.removeMarker(marker));
+            markers = [];
+            if (pathLayer) {
+                map.removeLayer(pathLayer);
+            }
+        }
+
+        // Add new marker
+        let marker = L.marker(e.latlng).addTo(map);
+        markers.push(marker);
+
+        // If we have two markers, calculate path
+        if (markers.length === 2) {
+            calculatePath();
+        }
+    });
+
+    function calculatePath() {
+        const data = {
+            p1: {
+                lat: markers[0].getLatLng().lat,
+                lng: markers[0].getLatLng().lng
+            },
+            p2: {
+                lat: markers[1].getLatLng().lat,
+                lng: markers[1].getLatLng().lng
+            }
+        };
+
+        fetch('/process', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Remove existing path if any
+                if (pathLayer) {
+                    map.removeLayer(pathLayer);
+                }
+                
+                // Load and display the GeoJSON
+                fetch(data.geojson_url)
+                    .then(response => response.json())
+                    .then(geojson => {
+                        pathLayer = L.geoJSON(geojson).addTo(map);
+                        map.fitBounds(pathLayer.getBounds());
+                    });
+            } else {
+                alert('Error calculating path: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error calculating path');
+        });
+    }
+  </script>
+</body>
+</html>
