@@ -142,6 +142,88 @@ def dijkstra(graph, start_id, end_id):
     
     return path_nodes, path_edges, d[end_id], len(S), neighbor_count
 
+def astar(graph, start_id, end_id):
+    # --- Heurystyka: euklidesowa odległość między dwoma węzłami ---
+    def heuristic(n1, n2):
+        dx = n1.x - n2.x
+        dy = n1.y - n2.y
+        return math.sqrt(dx*dx + dy*dy)
+    
+    # --- Inicjalizacja ---
+    S = set()        # odwiedzone
+    Q = set()        # do sprawdzenia
+    g_cost = {}      # koszt od startu do danego wierzchołka
+    f_cost = {}      # koszt całkowity (g + h)
+    p = {}           # poprzednicy
+    pe = {}          # poprzednie krawędzie
+    neighbor_count = 0
+    
+    # Ustaw wartości początkowe
+    for node_id in graph.nodes:
+        g_cost[node_id] = math.inf
+        f_cost[node_id] = math.inf
+        p[node_id] = None
+        pe[node_id] = None
+    
+    start_node = graph.nodes[start_id]
+    end_node = graph.nodes[end_id]
+    
+    g_cost[start_id] = 0
+    f_cost[start_id] = heuristic(start_node, end_node)
+    Q.add(start_id)
+    
+    # --- Główna pętla ---
+    while Q:
+        # wybierz wierzchołek o najmniejszym f_cost
+        v = min(Q, key=lambda node_id: f_cost[node_id])
+        Q.remove(v)
+        
+        if v == end_id:
+            break
+        
+        v_node = graph.nodes[v]
+        S.add(v)
+        
+        # przeglądaj sąsiadów
+        for edge, u_node in v_node.edges:
+            neighbor_count += 1
+            u = u_node.id
+            
+            if u in S:
+                continue
+            
+            tentative_g = g_cost[v] + edge.cost
+            if tentative_g < g_cost[u]:
+                g_cost[u] = tentative_g
+                f_cost[u] = tentative_g + heuristic(u_node, end_node)
+                p[u] = v
+                pe[u] = edge
+                Q.add(u)
+    
+    # --- Odtworzenie ścieżki ---
+    path_nodes = []
+    path_edges = []
+    
+    if g_cost[end_id] < math.inf:
+        node = end_id
+        while node is not None:
+            path_nodes.insert(0, node)
+            edge = pe[node]
+            if edge is not None:
+                path_edges.insert(0, edge.id)
+            node = p[node]
+    else:
+        print("Brak połączenia między wierzchołkami.")
+        return None, None, None, None
+    
+    # --- Wyniki ---
+    print(f"[A*] Najkrotsza odleglosc od {start_id} do {end_id}: {g_cost[end_id]:.2f}")
+    print(f"[A*] Sciezka po wierzcholkach: {path_nodes}")
+    print(f"[A*] Krawedzie trasy: {path_edges}")
+    print(f"[A*] Liczba odwiedzonych wierzcholkow: {len(S)}")
+    print(f"[A*] Liczba przejrzanych sasiadow: {neighbor_count}")
+    
+    return path_nodes, path_edges, g_cost[end_id], len(S), neighbor_count
 
 
 
@@ -167,8 +249,9 @@ print(g)
 start_node = 1   # start
 end_node = 15   # koniec
 path_nodes, path_edges, dist, visited, neighbors = dijkstra(g, start_node, end_node)
+#path_nodes, path_edges, dist, visited, neighbors = astar(g, start_node, end_node)
 
-# --- wizualizacja ---
+# --- wizualizacja --- tylko dla małych grafów
 def visualize(graph, path_nodes, path_edges, dist, out_png='shortest_path.png'):
     if plt is None:
         print("matplotlib not available — pomiń wizualizację.")
@@ -210,5 +293,5 @@ def visualize(graph, path_nodes, path_edges, dist, out_png='shortest_path.png'):
     plt.close(fig)
     print(f"Wizualizacja zapisana jako {out_png}")
 
-# call visualization
+
 visualize(g, path_nodes, path_edges, dist)
