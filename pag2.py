@@ -1,4 +1,7 @@
 import arcpy
+import os
+import dotenv
+dotenv.load_dotenv()
 
 class Node:
     def __init__(self, node_id, x, y):
@@ -78,7 +81,7 @@ def create_graph(workspace, layer):
         
     return gc.graph
 
-g = create_graph(r'C:\zajecia_3', 'jezdnie')
+g = create_graph(os.getenv('WORKSPACE_PATH'), os.getenv('WORKSPACE_NAME'))
 #print(g)
 
 
@@ -157,7 +160,7 @@ class Path:
         return self.path_edges
         
     
-'''
+
 p = DijkstrasBestPath(g, 1, 10)
 path_nodes = p.getPath()
 #print(path_nodes)
@@ -165,4 +168,3 @@ path_nodes = p.getPath()
 p_e = Path(g, path_nodes)
 edgs = p_e.getEdges()
 print(edgs)
-'''
